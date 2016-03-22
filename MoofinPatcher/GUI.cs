@@ -16,10 +16,12 @@ namespace MoofinPatcher
     public partial class GUI : Form
     {
         private const string packLink = "https://www.dropbox.com/s/71idlrnv59mak6z/modz.zip?dl=1";
+        private string minecraftDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\AppData\\Roaming\\.minecraft\\mods";
 
         public GUI()
         {
             InitializeComponent();
+            textBox1.Text = minecraftDir;
         }
 
         private void updateButton_click(object sender, EventArgs e)
@@ -29,7 +31,11 @@ namespace MoofinPatcher
 
         private void fileButton_Click(object sender, EventArgs e)
         {
-
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            fbd.SelectedPath = minecraftDir;
+            if (fbd.ShowDialog() != DialogResult.OK)
+                return;
+            textBox1.Text = fbd.SelectedPath;
         }
 
         public void downloadFile()
@@ -48,9 +54,15 @@ namespace MoofinPatcher
         private void extractFiles()
         {
             statusLabel.Text = "Extracting files";
+            ZipArchive files = null;
             try
             {
-                ZipFile.ExtractToDirectory("mods.zip", textBox1.Text);
+                files = ZipFile.Open("mods.zip", ZipArchiveMode.Read);
+                //ZipFile.ExtractToDirectory("mods.zip", textBox1.Text);
+                //files.ExtractToDirectory(textBox1.Text);
+                overWrite(files, textBox1.Text);
+                statusLabel.Text = "Done";
+
 
             } catch (DirectoryNotFoundException e)
             {
@@ -64,13 +76,41 @@ namespace MoofinPatcher
             {
                 statusLabel.Text = "Unauthorized access to output directory";
             }
+            catch (IOException e)
+            {
+                //try
+                //{
+                //    overWrite(files, textBox1.Text);
+                //    statusLabel.Text = "Done";
+                //} catch(Exception ex)
+                //{
+                //    statusLabel.Text = "Extracting failed";
+                //    ex.ToString();
+                //}
+                statusLabel.Text = "Extracting failed";
+            }
             catch (Exception e)
             {
                 statusLabel.Text = "Extracting failed";
+                Console.WriteLine(e.ToString());
             }
 
         }
 
+        private void overWrite(ZipArchive files, string destDir)
+        {
+            foreach (ZipArchiveEntry file in files.Entries)
+            {
+                string completeFileName = Path.Combine(destDir, file.FullName);
+                if (file.Name == "")
+                {// Assuming Empty for Directory
+                    //Directory.CreateDirectory(Path.GetDirectoryName(completeFileName));
+                    continue;
+                }
+                file.ExtractToFile(completeFileName, true);
+            }     
+
+        }
         private void dl_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
             statusLabel.Text = string.Format("Download: {0} MB / {1} MB",

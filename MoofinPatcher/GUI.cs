@@ -17,16 +17,19 @@ namespace MoofinPatcher
     {
         private const string packLink = "https://www.dropbox.com/s/71idlrnv59mak6z/modz.zip?dl=1";
         private string minecraftDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\AppData\\Roaming\\.minecraft\\mods";
-
+        private string DOWNLOAD_PATH;
         public GUI()
         {
             InitializeComponent();
-            textBox1.Text = minecraftDir;
+            textBox.Text = minecraftDir;
+            DOWNLOAD_PATH = Path.GetTempPath() + "mods.zip";
         }
 
         private void updateButton_click(object sender, EventArgs e)
         {
+            updateButton.Enabled = false;
             downloadFile();
+            
         }
 
         private void fileButton_Click(object sender, EventArgs e)
@@ -35,7 +38,7 @@ namespace MoofinPatcher
             fbd.SelectedPath = minecraftDir;
             if (fbd.ShowDialog() != DialogResult.OK)
                 return;
-            textBox1.Text = fbd.SelectedPath;
+            textBox.Text = fbd.SelectedPath;
         }
 
         public void downloadFile()
@@ -47,7 +50,7 @@ namespace MoofinPatcher
                 statusLabel.Text = "Downloading mods";
                 wc.DownloadProgressChanged += dl_DownloadProgressChanged;
                 wc.DownloadFileCompleted += downloadComplete;
-                wc.DownloadFileAsync(new Uri(packLink), "mods.zip");
+                wc.DownloadFileAsync(new Uri(packLink), DOWNLOAD_PATH);
             }
         }
 
@@ -57,42 +60,37 @@ namespace MoofinPatcher
             ZipArchive files = null;
             try
             {
-                files = ZipFile.Open("mods.zip", ZipArchiveMode.Read);
-                //ZipFile.ExtractToDirectory("mods.zip", textBox1.Text);
-                //files.ExtractToDirectory(textBox1.Text);
-                overWrite(files, textBox1.Text);
+                files = ZipFile.Open(DOWNLOAD_PATH, ZipArchiveMode.Read);
+                overWrite(files, textBox.Text);
                 statusLabel.Text = "Done";
+                files.Dispose();
+                File.Delete(DOWNLOAD_PATH);
+                updateButton.Enabled = true;
 
 
-            } catch (DirectoryNotFoundException e)
+            } catch (DirectoryNotFoundException)
             {
                 statusLabel.Text = "Output Directory not found";
             }
-            catch (PathTooLongException e)
+            catch (PathTooLongException)
             {
                 statusLabel.Text = "OutputPath too long";
             }
-            catch (UnauthorizedAccessException e)
+            catch (UnauthorizedAccessException)
             {
                 statusLabel.Text = "Unauthorized access to output directory";
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                //try
-                //{
-                //    overWrite(files, textBox1.Text);
-                //    statusLabel.Text = "Done";
-                //} catch(Exception ex)
-                //{
-                //    statusLabel.Text = "Extracting failed";
-                //    ex.ToString();
-                //}
-                statusLabel.Text = "Extracting failed";
+                statusLabel.Text = "Extracting failed Input/Output Error";
             }
             catch (Exception e)
             {
                 statusLabel.Text = "Extracting failed";
                 Console.WriteLine(e.ToString());
+            } finally
+            {
+                updateButton.Enabled = true;
             }
 
         }
@@ -103,8 +101,7 @@ namespace MoofinPatcher
             {
                 string completeFileName = Path.Combine(destDir, file.FullName);
                 if (file.Name == "")
-                {// Assuming Empty for Directory
-                    //Directory.CreateDirectory(Path.GetDirectoryName(completeFileName));
+                {//File exists so skip
                     continue;
                 }
                 file.ExtractToFile(completeFileName, true);
@@ -121,7 +118,7 @@ namespace MoofinPatcher
 
         private void downloadComplete(object sender, AsyncCompletedEventArgs e)
         {
-            statusLabel.Text = "Done";
+            statusLabel.Text = "Done Downloading";
             extractFiles();
 
         }

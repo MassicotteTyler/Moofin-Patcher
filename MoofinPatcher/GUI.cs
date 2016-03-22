@@ -16,7 +16,8 @@ namespace MoofinPatcher
     public partial class GUI : Form
     {
         private const string packLink = "https://www.dropbox.com/s/71idlrnv59mak6z/modz.zip?dl=1";
-        private string minecraftDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\AppData\\Roaming\\.minecraft\\mods";
+        private static char sep = Path.DirectorySeparatorChar;
+        private string minecraftDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + string.Format("{0}AppData{0}Roaming{0}.minecraft{0}mods", sep);
 
         public GUI()
         {
@@ -99,6 +100,9 @@ namespace MoofinPatcher
 
         private void overWrite(ZipArchive files, string destDir)
         {
+			if(!Directory.Exists(destDir))
+				Directory.CreateDirectory(destDir);
+
             foreach (ZipArchiveEntry file in files.Entries)
             {
                 string completeFileName = Path.Combine(destDir, file.FullName);

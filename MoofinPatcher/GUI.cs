@@ -16,11 +16,15 @@ namespace MoofinPatcher
     public partial class GUI : Form
     {
         private const string packLink = "https://www.dropbox.com/s/71idlrnv59mak6z/modz.zip?dl=1";
-        private string minecraftDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\AppData\\Roaming\\.minecraft\\mods";
+        private static char sep = Path.DirectorySeparatorChar;
+		private static string userPath = Environment.GetFolderPath (Environment.SpecialFolder.UserProfile);
+		private string minecraftDir = getDefaultFilePath();
         private string DOWNLOAD_PATH;
+
         public GUI()
         {
             InitializeComponent();
+			this.Text = "Moofin Pather 0.3";
             textBox.Text = minecraftDir;
             DOWNLOAD_PATH = Path.GetTempPath() + "mods.zip";
         }
@@ -53,6 +57,18 @@ namespace MoofinPatcher
                 wc.DownloadFileAsync(new Uri(packLink), DOWNLOAD_PATH);
             }
         }
+
+		private static string getDefaultFilePath()
+		{
+			Console.Write (Environment.OSVersion);
+			string os = Environment.OSVersion.ToString();
+			if (os.Contains ("Unix")) // Mac
+				return userPath + string.Format("{0}Library{0}Application Support{0}minecraft{0}mods", sep);
+			else if(os.Contains ("Linux")) // Linux
+				return userPath + string.Format("{0}.minecraft{0}mods", sep);
+			else // Windows
+				return userPath + string.Format("{0}AppData{0}Roaming{0}.minecraft{0}mods", sep);
+		}
 
         private void extractFiles()
         {
@@ -97,6 +113,9 @@ namespace MoofinPatcher
 
         private void overWrite(ZipArchive files, string destDir)
         {
+			if(!Directory.Exists(destDir))
+				Directory.CreateDirectory(destDir);
+
             foreach (ZipArchiveEntry file in files.Entries)
             {
                 string completeFileName = Path.Combine(destDir, file.FullName);

@@ -16,20 +16,33 @@ namespace MoofinPatcher
     public partial class GUI : Form
     {
         private const string packLink = "https://www.dropbox.com/s/71idlrnv59mak6z/modz.zip?dl=1";
+        private static char sep = Path.DirectorySeparatorChar;
+		private static string userPath = Environment.GetFolderPath (Environment.SpecialFolder.UserProfile);
+		private string minecraftDir = getDefaultFilePath();
+        private string DOWNLOAD_PATH;
 
         public GUI()
         {
             InitializeComponent();
+			this.Text = "Moofin Pather 0.3";
+            textBox.Text = minecraftDir;
+            DOWNLOAD_PATH = Path.GetTempPath() + "mods.zip";
         }
 
         private void updateButton_click(object sender, EventArgs e)
         {
+            updateButton.Enabled = false;
             downloadFile();
+            
         }
 
         private void fileButton_Click(object sender, EventArgs e)
         {
-
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            fbd.SelectedPath = minecraftDir;
+            if (fbd.ShowDialog() != DialogResult.OK)
+                return;
+            textBox.Text = fbd.SelectedPath;
         }
 
         public void downloadFile()
@@ -41,36 +54,79 @@ namespace MoofinPatcher
                 statusLabel.Text = "Downloading mods";
                 wc.DownloadProgressChanged += dl_DownloadProgressChanged;
                 wc.DownloadFileCompleted += downloadComplete;
-                wc.DownloadFileAsync(new Uri(packLink), "mods.zip");
+                wc.DownloadFileAsync(new Uri(packLink), DOWNLOAD_PATH);
             }
         }
+
+		private static string getDefaultFilePath()
+		{
+			Console.Write (Environment.OSVersion);
+			string os = Environment.OSVersion.ToString();
+			if (os.Contains ("Unix")) // Mac
+				return userPath + string.Format("{0}Library{0}Application Support{0}minecraft{0}mods", sep);
+			else if(os.Contains ("Linux")) // Linux
+				return userPath + string.Format("{0}.minecraft{0}mods", sep);
+			else // Windows
+				return userPath + string.Format("{0}AppData{0}Roaming{0}.minecraft{0}mods", sep);
+		}
 
         private void extractFiles()
         {
             statusLabel.Text = "Extracting files";
+            ZipArchive files = null;
             try
             {
-                ZipFile.ExtractToDirectory("mods.zip", textBox1.Text);
+                files = ZipFile.Open(DOWNLOAD_PATH, ZipArchiveMode.Read);
+                overWrite(files, textBox.Text);
+                statusLabel.Text = "Done";
+                files.Dispose();
+                File.Delete(DOWNLOAD_PATH);
+                updateButton.Enabled = true;
 
-            } catch (DirectoryNotFoundException e)
+
+            } catch (DirectoryNotFoundException)
             {
                 statusLabel.Text = "Output Directory not found";
             }
-            catch (PathTooLongException e)
+            catch (PathTooLongException)
             {
                 statusLabel.Text = "OutputPath too long";
             }
-            catch (UnauthorizedAccessException e)
+            catch (UnauthorizedAccessException)
             {
                 statusLabel.Text = "Unauthorized access to output directory";
+            }
+            catch (IOException)
+            {
+                statusLabel.Text = "Extracting failed Input/Output Error";
             }
             catch (Exception e)
             {
                 statusLabel.Text = "Extracting failed";
+                Console.WriteLine(e.ToString());
+            } finally
+            {
+                updateButton.Enabled = true;
             }
 
         }
 
+        private void overWrite(ZipArchive files, string destDir)
+        {
+			if(!Directory.Exists(destDir))
+				Directory.CreateDirectory(destDir);
+
+            foreach (ZipArchiveEntry file in files.Entries)
+            {
+                string completeFileName = Path.Combine(destDir, file.FullName);
+                if (file.Name == "")
+                {//File exists so skip
+                    continue;
+                }
+                file.ExtractToFile(completeFileName, true);
+            }     
+
+        }
         private void dl_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
             statusLabel.Text = string.Format("Download: {0} MB / {1} MB",
@@ -81,7 +137,7 @@ namespace MoofinPatcher
 
         private void downloadComplete(object sender, AsyncCompletedEventArgs e)
         {
-            statusLabel.Text = "Done";
+            statusLabel.Text = "Done Downloading";
             extractFiles();
 
         }

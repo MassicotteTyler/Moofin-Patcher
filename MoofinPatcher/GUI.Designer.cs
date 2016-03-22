@@ -28,19 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GUI));
+            this.textBox = new System.Windows.Forms.TextBox();
             this.fileButton = new System.Windows.Forms.Button();
             this.updateButton = new System.Windows.Forms.Button();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.statusLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
-            // textBox1
+            // textBox
             // 
-            this.textBox1.Location = new System.Drawing.Point(13, 13);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(366, 20);
-            this.textBox1.TabIndex = 0;
+            this.textBox.Location = new System.Drawing.Point(13, 13);
+            this.textBox.Name = "textBox";
+            this.textBox.Size = new System.Drawing.Size(366, 20);
+            this.textBox.TabIndex = 0;
             // 
             // fileButton
             // 
@@ -89,7 +90,9 @@
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.updateButton);
             this.Controls.Add(this.fileButton);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.textBox);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "GUI";
             this.Text = "Moofin Patcher 0.2";
             this.ResumeLayout(false);
@@ -99,7 +102,7 @@
 
         #endregion
 
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox textBox;
         private System.Windows.Forms.Button fileButton;
         private System.Windows.Forms.Button updateButton;
         private System.Windows.Forms.ProgressBar progressBar;
